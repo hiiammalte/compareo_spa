@@ -1,0 +1,8 @@
+#import "./user.fragment.graphql"
+
+fragment categoryData on Category {
+    id
+    title
+    createdAt
+    updatedAt
+}

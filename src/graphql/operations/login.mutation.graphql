@@ -1,0 +1,8 @@
+mutation Login ($email: String!, $password: String!, $remember: Boolean! ) {
+    login(options: { email: $email, password: $password, longlife: $remember }) {
+        token
+        errors {
+            message
+        }
+    }
+}

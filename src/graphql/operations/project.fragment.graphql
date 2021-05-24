@@ -1,0 +1,20 @@
+#import "./category.fragment.graphql"
+#import "./product.fragment.graphql"
+#import "./user.fragment.graphql"
+
+fragment projectData on Project {
+    id
+    title
+    description
+    category {
+        ...categoryData
+    }
+    products {
+        ...productData
+    }
+    creator {
+        ...userData
+    }
+    createdAt
+    updatedAt
+}

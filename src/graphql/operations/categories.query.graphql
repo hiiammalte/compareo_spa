@@ -1,0 +1,7 @@
+#import "./category.fragment.graphql"
+
+query Categories {
+    categories {
+        ...categoryData
+    }
+}

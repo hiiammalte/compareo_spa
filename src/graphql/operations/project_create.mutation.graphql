@@ -1,0 +1,16 @@
+#import "./project.fragment.graphql"
+
+mutation CreateProject ($title: String!, $description: String!, $categoryId: String!) {
+  createProject(options: {
+    title: $title,
+    description: $description,
+    categoryId: $categoryId
+  }) {
+    project {
+      ...projectData
+    }
+    errors {
+      message
+    }
+  }
+}

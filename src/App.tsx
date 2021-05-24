@@ -1,24 +1,29 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { ApolloProvider } from '@apollo/client';
+
+import { PublicRoutes } from './global/routeDefs';
+import PublicContainer from './containers/PublicContainer';
+import PrivateContainer from './containers/PrivateContainer';
+import AuthProvider from './hoc/AuthProvider';
+import createApolloClient from './hoc/ApolloProvider';
+
+import './assets/stylesheets/main-min.css';
+import './assets/icons/fontawesome';
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <AuthProvider>
+        <ApolloProvider client={createApolloClient} >
+          <Router>
+            <Switch>
+              <Route exact path={PublicRoutes.login} component={PublicContainer} />
+              <Route exact path={PublicRoutes.unauthorized} component={PublicContainer} />
+              <Route component={PrivateContainer} />
+            </Switch>
+          </Router>
+        </ApolloProvider>
+      </AuthProvider>
     </div>
   );
 }

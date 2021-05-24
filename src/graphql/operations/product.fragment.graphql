@@ -1,0 +1,13 @@
+#import "./user.fragment.graphql"
+
+fragment productData on Product {
+    id
+    name
+    url
+    manufacturer
+    creator {
+        ...userData
+    }
+    createdAt
+    updatedAt
+}
