@@ -8,7 +8,7 @@ This is the frontend part of the compareo app. This Single Page Application is b
 - uses Apollo Client to communication with GraphQL-API
 - stores Bearer Access Token (JWT) in Browser Memory (JavaScript variable)
 - automatic refetching of Access Token on page-reload using provided Refresh Token (HttpOnly-Cookie)
-- graphql-codegen implmenation to automatically fetch and create GraphQL query- and mutations-hooks
+- graphql-codegen implemenation for automatic fetching and creating GraphQL Query- & Mutations-hooks
 - functional UI components based on imported compareo_sass UI (imported as compressed CSS)
 - react-router-dom routing with AuthRoute-mechanism to prevent access to private pages (login required)
 - TypeScript type-safety implementation
