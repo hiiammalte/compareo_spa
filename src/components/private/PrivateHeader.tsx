@@ -1,17 +1,20 @@
 import { useApolloClient } from "@apollo/client";
 import { ReactNode } from "react";
 import { useHistory } from "react-router";
+import { NavLink } from "react-router-dom";
+
 import { useLogoutMutation } from "../../graphql/hooks/graphql";
 import { PublicRoutes } from "../../global/routeDefs";
 import { useAuth } from "../../hoc/AuthProvider";
 import Icon from "../Icon";
 
 type HeaderProps = {
-  title: string,
-  children: ReactNode
+  title?: string,
+  children: ReactNode,
+  goBackPath?: string,
 };
 
-function Header({title, children} : HeaderProps) {
+function Header({title, children, goBackPath} : HeaderProps) {
   const apolloClient = useApolloClient();
   const [logout] = useLogoutMutation();
   const { signOut } = useAuth();
@@ -32,6 +35,11 @@ function Header({title, children} : HeaderProps) {
     <div id="header">
       <div id="header__content-aware">
         <div className="title">
+          { goBackPath && 
+            <NavLink to={goBackPath} className="action-btn action-btn-light">
+              <Icon name="chevron-left" />
+            </NavLink>
+          }
           <h3>{ title }</h3>
         </div>
         <div className="action">

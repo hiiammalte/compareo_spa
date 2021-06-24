@@ -7,53 +7,53 @@ import * as yup from 'yup'
 import { useAuth } from '../hoc/AuthProvider'
 import { AuthRoutes } from '../global/routeDefs'
 import SidemenuContainer from '../components/public/Sidemenu'
-import { LoginMutationVariables, useLoginMutation } from '../graphql/hooks/graphql'
+import { RegisterByInvitationMutationVariables, useRegisterByInvitationMutation } from '../graphql/hooks/graphql'
 import InputField from '../components/form/InputField'
 import SubmitButton from '../components/form/SubmitButton'
-import CompactCheckbox from '../components/form/CompactCheckbox'
 import ErrorSummary from '../components/form/ErrorSummary'
 
-const initialValues: LoginMutationVariables = {
+const initialValues: RegisterByInvitationMutationVariables = {
     email: "",
     password: "",
-    remember: false
+    username: "",
+    invitationCode: ""
 };
 
 const validationSchema = yup.object({
     email: yup.string().required().email(),
     password: yup.string().required().min(5).max(100),
-    remember: yup.boolean().required()
+    username: yup.string().required(),
+    invitationCode: yup.string().required()
 });
 
-function Login() {
+function Register() {
     const apolloClient = useApolloClient();
-    const [login] = useLoginMutation();
+    const [register] = useRegisterByInvitationMutation();
     const { signIn } = useAuth();
 
     const [invalidApiResponse, setInvalidApiResponse] = useState<boolean>(false);
     const history = useHistory();
 
-    const formik = useFormik<LoginMutationVariables>({
+    const formik = useFormik<RegisterByInvitationMutationVariables>({
         initialValues,
         validationSchema,
         onSubmit: async (
-                values: LoginMutationVariables,
-                { setSubmitting }: FormikHelpers<LoginMutationVariables>
+                values: RegisterByInvitationMutationVariables,
+                { setSubmitting }: FormikHelpers<RegisterByInvitationMutationVariables>
             ) => {
-                const response = await login({
+                const response = await register({
                     variables: values
                 });
-                if (response && response.data?.login?.token) {
+                if (response && response.data?.registerByInvitation?.token) {
                     await apolloClient.resetStore();
-                    signIn(response.data.login.token);
+                    signIn(response.data.registerByInvitation.token);
                     setSubmitting(false);
                     setInvalidApiResponse(false);
-                    console.log("LOGGED IN", response.data.login.token)
                     history.push(AuthRoutes.projects);
                 }
-                if (response && response.data?.login?.errors) {
+                if (response && response.data?.registerByInvitation?.errors) {
                     setInvalidApiResponse(true);
-                    console.log("LOGIN ERRORS: ", response.data?.login?.errors)
+                    console.log("REGISTRATION ERRORS: ", response.data?.registerByInvitation?.errors)
                 }
             }
         });
@@ -64,19 +64,21 @@ function Login() {
                 <form onSubmit={formik.handleSubmit} >
                     <InputField name="email" type="email" label="Email" />
                     <InputField name="password" type="password" label="Password" />
-                    <CompactCheckbox name="remember" label="Stay logged in for 30 days"/>
-                    <SubmitButton text="Login"/>
-                    { invalidApiResponse && <ErrorSummary errorMessage="Invalid Username and/or Passwort" /> }
+                    <InputField name="username" type="text" label="Username" />
+                    <InputField name="invitationCode" type="text" label="Invitation code" />
+                    <SubmitButton text="Join"/>
+                    { invalidApiResponse && <ErrorSummary errorMessage="Invalid email address or invitation code" /> }
                 </form>
+               
             </FormikProvider>
             <div className="form-group">
                 <small>
-                    <p>Do you have an invitation code?</p>
-                    <NavLink to="/register">Click here</NavLink>
+                    <p>Already have an account?</p>
+                    <NavLink to="/login">Go back to Login</NavLink>
                 </small>
             </div>
         </SidemenuContainer>
     );
 }
 
-export default Login;
+export default Register;

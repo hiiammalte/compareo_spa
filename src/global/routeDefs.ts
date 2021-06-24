@@ -1,6 +1,7 @@
 enum AuthRoutes {
     dashboard = "/",
     projects = "/projects",
+    project = "/project",
     collaborators = "/collaborators"
 }
 

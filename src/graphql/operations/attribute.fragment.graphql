@@ -1,0 +1,12 @@
+#import "./user.fragment.graphql"
+
+fragment attributeData on Attribute {
+    id
+    title
+    dataType
+    creator {
+        ...userData
+    }
+    createdAt
+    updatedAt
+}

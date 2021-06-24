@@ -18,6 +18,7 @@ function App() {
           <Router>
             <Switch>
               <Route exact path={PublicRoutes.login} component={PublicContainer} />
+              <Route exact path={PublicRoutes.register} component={PublicContainer} />
               <Route exact path={PublicRoutes.unauthorized} component={PublicContainer} />
               <Route component={PrivateContainer} />
             </Switch>

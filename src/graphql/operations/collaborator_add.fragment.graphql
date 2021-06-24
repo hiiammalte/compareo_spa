@@ -1,0 +1,13 @@
+#import "./attribute.fragment.graphql"
+
+mutation AddCollaborators ($projectId: String!, $email: String!) {
+    addCollaborators(
+        options: { email: $email },
+        projectId: $projectId
+    ) {
+        success
+        errors {
+            message
+        }
+    }
+}

@@ -1,0 +1,15 @@
+#import "./attribute.fragment.graphql"
+
+mutation CreateAttribute ($projectId: String!, $title: String!, $dataType: ComparisionType!) {
+    createAttribute(
+        options: { title: $title, dataType: $dataType },
+        projectId: $projectId
+    ) {
+        attribute {
+            ...attributeData
+        }
+        errors {
+            message
+        }
+    }
+}

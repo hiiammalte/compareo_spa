@@ -1,0 +1,15 @@
+#import "./product.fragment.graphql"
+
+mutation CreateProduct ($projectId: String!, $name: String!, $url: String, $manufacturer: String) {
+    createProduct(
+        options: { name: $name, url: $url,manufacturer: $manufacturer },
+        projectId: $projectId
+    ) {
+        product {
+            ...productData
+        }
+        errors {
+            message
+        }
+    }
+}

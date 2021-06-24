@@ -16,6 +16,10 @@ export type Scalars = {
   DateTime: any;
 };
 
+export type AddCollaboratorInput = {
+  email: Scalars['String'];
+};
+
 /** The reusable Attribute model - used as base for assigning properties to products */
 export type Attribute = {
   id: Scalars['ID'];
@@ -57,6 +61,11 @@ export type Category = {
   updatedAt?: Maybe<Scalars['DateTime']>;
 };
 
+export type CollaborationSuccessResponse = MutationResponse & {
+  errors?: Maybe<Array<Error>>;
+  success?: Maybe<Scalars['Boolean']>;
+};
+
 /** This is mandatory to tell the app on how to compare properties of two or more products */
 export enum ComparisionType {
   Number = 'NUMBER',
@@ -71,8 +80,8 @@ export type CreateAttributeInput = {
 
 export type CreateProductInput = {
   name: Scalars['String'];
-  url: Scalars['String'];
-  manufacturer: Scalars['String'];
+  url?: Maybe<Scalars['String']>;
+  manufacturer?: Maybe<Scalars['String']>;
 };
 
 export type CreateProjectInput = {
@@ -87,7 +96,8 @@ export type Error = {
 };
 
 export type Mutation = {
-  register: UserCreatedResponse;
+  register: UserTokenResponse;
+  registerByInvitation: UserTokenResponse;
   login: UserTokenResponse;
   revokeAccess: UserSuccessResponse;
   logout: UserSuccessResponse;
@@ -100,11 +110,18 @@ export type Mutation = {
   deleteAttribute: AttributeSuccessResponse;
   createProduct: ProductCreatedResponse;
   updateProduct: ProductUpdatedResponse;
+  addCollaborators: CollaborationSuccessResponse;
+  removeCollaborator: CollaborationSuccessResponse;
 };
 
 
 export type MutationRegisterArgs = {
   options: RegistrationInput;
+};
+
+
+export type MutationRegisterByInvitationArgs = {
+  options: RegistrationByInvitationInput;
 };
 
 
@@ -142,6 +159,7 @@ export type MutationDeleteProjectArgs = {
 
 export type MutationCreateAttributeArgs = {
   options: CreateAttributeInput;
+  projectId: Scalars['String'];
 };
 
 
@@ -166,6 +184,18 @@ export type MutationUpdateProductArgs = {
   options: UpdateProductInput;
   projectId: Scalars['String'];
   id: Scalars['String'];
+};
+
+
+export type MutationAddCollaboratorsArgs = {
+  options: AddCollaboratorInput;
+  projectId: Scalars['String'];
+};
+
+
+export type MutationRemoveCollaboratorArgs = {
+  options: RemoveCollaboratorInput;
+  projectId: Scalars['String'];
 };
 
 export type MutationResponse = {
@@ -217,6 +247,8 @@ export type Project = {
   category: Category;
   /** Comparable products within this project */
   products: Array<Product>;
+  /** Attributes for comparison within this project */
+  attributes: Array<Attribute>;
   /** Additional users participating in this project */
   collaborators: Array<User>;
   /** User who created this project */
@@ -292,10 +324,21 @@ export type QueryProductArgs = {
   id: Scalars['String'];
 };
 
+export type RegistrationByInvitationInput = {
+  username: Scalars['String'];
+  password: Scalars['String'];
+  email: Scalars['String'];
+  invitationCode: Scalars['String'];
+};
+
 export type RegistrationInput = {
   username: Scalars['String'];
   password: Scalars['String'];
   email: Scalars['String'];
+};
+
+export type RemoveCollaboratorInput = {
+  id: Scalars['String'];
 };
 
 export type UpdateAttributeInput = {
@@ -328,11 +371,6 @@ export type User = {
   updatedAt?: Maybe<Scalars['DateTime']>;
 };
 
-export type UserCreatedResponse = MutationResponse & {
-  errors?: Maybe<Array<Error>>;
-  id?: Maybe<Scalars['String']>;
-};
-
 export type UserSuccessResponse = MutationResponse & {
   errors?: Maybe<Array<Error>>;
   success?: Maybe<Scalars['Boolean']>;
@@ -349,12 +387,37 @@ export type UsernamePasswordInput = {
   longlife: Scalars['Boolean'];
 };
 
+export type AttributeDataFragment = (
+  Pick<Attribute, 'id' | 'title' | 'dataType' | 'createdAt' | 'updatedAt'>
+  & { creator: UserDataFragment }
+);
+
+export type CreateAttributeMutationVariables = Exact<{
+  projectId: Scalars['String'];
+  title: Scalars['String'];
+  dataType: ComparisionType;
+}>;
+
+
+export type CreateAttributeMutation = { createAttribute: { attribute?: Maybe<AttributeDataFragment>, errors?: Maybe<Array<Pick<Error, 'message'>>> } };
+
 export type CategoriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type CategoriesQuery = { categories: Array<CategoryDataFragment> };
 
 export type CategoryDataFragment = Pick<Category, 'id' | 'title' | 'createdAt' | 'updatedAt'>;
+
+export type AddCollaboratorsMutationVariables = Exact<{
+  projectId: Scalars['String'];
+  email: Scalars['String'];
+}>;
+
+
+export type AddCollaboratorsMutation = { addCollaborators: (
+    Pick<CollaborationSuccessResponse, 'success'>
+    & { errors?: Maybe<Array<Pick<Error, 'message'>>> }
+  ) };
 
 export type LoginMutationVariables = Exact<{
   email: Scalars['String'];
@@ -381,10 +444,27 @@ export type ProductDataFragment = (
   & { creator: UserDataFragment }
 );
 
+export type CreateProductMutationVariables = Exact<{
+  projectId: Scalars['String'];
+  name: Scalars['String'];
+  url?: Maybe<Scalars['String']>;
+  manufacturer?: Maybe<Scalars['String']>;
+}>;
+
+
+export type CreateProductMutation = { createProduct: { product?: Maybe<ProductDataFragment>, errors?: Maybe<Array<Pick<Error, 'message'>>> } };
+
 export type ProjectDataFragment = (
   Pick<Project, 'id' | 'title' | 'description' | 'createdAt' | 'updatedAt'>
-  & { category: CategoryDataFragment, products: Array<ProductDataFragment>, creator: UserDataFragment }
+  & { category: CategoryDataFragment, products: Array<ProductDataFragment>, attributes: Array<AttributeDataFragment>, collaborators: Array<UserDataFragment>, creator: UserDataFragment }
 );
+
+export type ProjectQueryVariables = Exact<{
+  id: Scalars['String'];
+}>;
+
+
+export type ProjectQuery = { project?: Maybe<ProjectDataFragment> };
 
 export type CreateProjectMutationVariables = Exact<{
   title: Scalars['String'];
@@ -399,6 +479,19 @@ export type ProjectsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type ProjectsQuery = { projects: Array<ProjectDataFragment> };
+
+export type RegisterByInvitationMutationVariables = Exact<{
+  email: Scalars['String'];
+  password: Scalars['String'];
+  username: Scalars['String'];
+  invitationCode: Scalars['String'];
+}>;
+
+
+export type RegisterByInvitationMutation = { registerByInvitation: (
+    Pick<UserTokenResponse, 'token'>
+    & { errors?: Maybe<Array<Pick<Error, 'message'>>> }
+  ) };
 
 export type UserDataFragment = Pick<User, 'id' | 'username' | 'email' | 'createdAt' | 'updatedAt'>;
 
@@ -444,6 +537,18 @@ export const ProductDataFragmentDoc = gql`
   updatedAt
 }
     ${UserDataFragmentDoc}`;
+export const AttributeDataFragmentDoc = gql`
+    fragment attributeData on Attribute {
+  id
+  title
+  dataType
+  creator {
+    ...userData
+  }
+  createdAt
+  updatedAt
+}
+    ${UserDataFragmentDoc}`;
 export const ProjectDataFragmentDoc = gql`
     fragment projectData on Project {
   id
@@ -455,6 +560,12 @@ export const ProjectDataFragmentDoc = gql`
   products {
     ...productData
   }
+  attributes {
+    ...attributeData
+  }
+  collaborators {
+    ...userData
+  }
   creator {
     ...userData
   }
@@ -463,7 +574,51 @@ export const ProjectDataFragmentDoc = gql`
 }
     ${CategoryDataFragmentDoc}
 ${ProductDataFragmentDoc}
+${AttributeDataFragmentDoc}
 ${UserDataFragmentDoc}`;
+export const CreateAttributeDocument = gql`
+    mutation CreateAttribute($projectId: String!, $title: String!, $dataType: ComparisionType!) {
+  createAttribute(
+    options: {title: $title, dataType: $dataType}
+    projectId: $projectId
+  ) {
+    attribute {
+      ...attributeData
+    }
+    errors {
+      message
+    }
+  }
+}
+    ${AttributeDataFragmentDoc}`;
+export type CreateAttributeMutationFn = Apollo.MutationFunction<CreateAttributeMutation, CreateAttributeMutationVariables>;
+
+/**
+ * __useCreateAttributeMutation__
+ *
+ * To run a mutation, you first call `useCreateAttributeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateAttributeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createAttributeMutation, { data, loading, error }] = useCreateAttributeMutation({
+ *   variables: {
+ *      projectId: // value for 'projectId'
+ *      title: // value for 'title'
+ *      dataType: // value for 'dataType'
+ *   },
+ * });
+ */
+export function useCreateAttributeMutation(baseOptions?: Apollo.MutationHookOptions<CreateAttributeMutation, CreateAttributeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateAttributeMutation, CreateAttributeMutationVariables>(CreateAttributeDocument, options);
+      }
+export type CreateAttributeMutationHookResult = ReturnType<typeof useCreateAttributeMutation>;
+export type CreateAttributeMutationResult = Apollo.MutationResult<CreateAttributeMutation>;
+export type CreateAttributeMutationOptions = Apollo.BaseMutationOptions<CreateAttributeMutation, CreateAttributeMutationVariables>;
 export const CategoriesDocument = gql`
     query Categories {
   categories {
@@ -498,6 +653,43 @@ export function useCategoriesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
 export type CategoriesQueryHookResult = ReturnType<typeof useCategoriesQuery>;
 export type CategoriesLazyQueryHookResult = ReturnType<typeof useCategoriesLazyQuery>;
 export type CategoriesQueryResult = Apollo.QueryResult<CategoriesQuery, CategoriesQueryVariables>;
+export const AddCollaboratorsDocument = gql`
+    mutation AddCollaborators($projectId: String!, $email: String!) {
+  addCollaborators(options: {email: $email}, projectId: $projectId) {
+    success
+    errors {
+      message
+    }
+  }
+}
+    `;
+export type AddCollaboratorsMutationFn = Apollo.MutationFunction<AddCollaboratorsMutation, AddCollaboratorsMutationVariables>;
+
+/**
+ * __useAddCollaboratorsMutation__
+ *
+ * To run a mutation, you first call `useAddCollaboratorsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddCollaboratorsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addCollaboratorsMutation, { data, loading, error }] = useAddCollaboratorsMutation({
+ *   variables: {
+ *      projectId: // value for 'projectId'
+ *      email: // value for 'email'
+ *   },
+ * });
+ */
+export function useAddCollaboratorsMutation(baseOptions?: Apollo.MutationHookOptions<AddCollaboratorsMutation, AddCollaboratorsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddCollaboratorsMutation, AddCollaboratorsMutationVariables>(AddCollaboratorsDocument, options);
+      }
+export type AddCollaboratorsMutationHookResult = ReturnType<typeof useAddCollaboratorsMutation>;
+export type AddCollaboratorsMutationResult = Apollo.MutationResult<AddCollaboratorsMutation>;
+export type AddCollaboratorsMutationOptions = Apollo.BaseMutationOptions<AddCollaboratorsMutation, AddCollaboratorsMutationVariables>;
 export const LoginDocument = gql`
     mutation Login($email: String!, $password: String!, $remember: Boolean!) {
   login(options: {email: $email, password: $password, longlife: $remember}) {
@@ -571,6 +763,85 @@ export function useLogoutMutation(baseOptions?: Apollo.MutationHookOptions<Logou
 export type LogoutMutationHookResult = ReturnType<typeof useLogoutMutation>;
 export type LogoutMutationResult = Apollo.MutationResult<LogoutMutation>;
 export type LogoutMutationOptions = Apollo.BaseMutationOptions<LogoutMutation, LogoutMutationVariables>;
+export const CreateProductDocument = gql`
+    mutation CreateProduct($projectId: String!, $name: String!, $url: String, $manufacturer: String) {
+  createProduct(
+    options: {name: $name, url: $url, manufacturer: $manufacturer}
+    projectId: $projectId
+  ) {
+    product {
+      ...productData
+    }
+    errors {
+      message
+    }
+  }
+}
+    ${ProductDataFragmentDoc}`;
+export type CreateProductMutationFn = Apollo.MutationFunction<CreateProductMutation, CreateProductMutationVariables>;
+
+/**
+ * __useCreateProductMutation__
+ *
+ * To run a mutation, you first call `useCreateProductMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateProductMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createProductMutation, { data, loading, error }] = useCreateProductMutation({
+ *   variables: {
+ *      projectId: // value for 'projectId'
+ *      name: // value for 'name'
+ *      url: // value for 'url'
+ *      manufacturer: // value for 'manufacturer'
+ *   },
+ * });
+ */
+export function useCreateProductMutation(baseOptions?: Apollo.MutationHookOptions<CreateProductMutation, CreateProductMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateProductMutation, CreateProductMutationVariables>(CreateProductDocument, options);
+      }
+export type CreateProductMutationHookResult = ReturnType<typeof useCreateProductMutation>;
+export type CreateProductMutationResult = Apollo.MutationResult<CreateProductMutation>;
+export type CreateProductMutationOptions = Apollo.BaseMutationOptions<CreateProductMutation, CreateProductMutationVariables>;
+export const ProjectDocument = gql`
+    query Project($id: String!) {
+  project(id: $id) {
+    ...projectData
+  }
+}
+    ${ProjectDataFragmentDoc}`;
+
+/**
+ * __useProjectQuery__
+ *
+ * To run a query within a React component, call `useProjectQuery` and pass it any options that fit your needs.
+ * When your component renders, `useProjectQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useProjectQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useProjectQuery(baseOptions: Apollo.QueryHookOptions<ProjectQuery, ProjectQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ProjectQuery, ProjectQueryVariables>(ProjectDocument, options);
+      }
+export function useProjectLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ProjectQuery, ProjectQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ProjectQuery, ProjectQueryVariables>(ProjectDocument, options);
+        }
+export type ProjectQueryHookResult = ReturnType<typeof useProjectQuery>;
+export type ProjectLazyQueryHookResult = ReturnType<typeof useProjectLazyQuery>;
+export type ProjectQueryResult = Apollo.QueryResult<ProjectQuery, ProjectQueryVariables>;
 export const CreateProjectDocument = gql`
     mutation CreateProject($title: String!, $description: String!, $categoryId: String!) {
   createProject(
@@ -647,6 +918,47 @@ export function useProjectsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<P
 export type ProjectsQueryHookResult = ReturnType<typeof useProjectsQuery>;
 export type ProjectsLazyQueryHookResult = ReturnType<typeof useProjectsLazyQuery>;
 export type ProjectsQueryResult = Apollo.QueryResult<ProjectsQuery, ProjectsQueryVariables>;
+export const RegisterByInvitationDocument = gql`
+    mutation RegisterByInvitation($email: String!, $password: String!, $username: String!, $invitationCode: String!) {
+  registerByInvitation(
+    options: {email: $email, password: $password, username: $username, invitationCode: $invitationCode}
+  ) {
+    token
+    errors {
+      message
+    }
+  }
+}
+    `;
+export type RegisterByInvitationMutationFn = Apollo.MutationFunction<RegisterByInvitationMutation, RegisterByInvitationMutationVariables>;
+
+/**
+ * __useRegisterByInvitationMutation__
+ *
+ * To run a mutation, you first call `useRegisterByInvitationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRegisterByInvitationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [registerByInvitationMutation, { data, loading, error }] = useRegisterByInvitationMutation({
+ *   variables: {
+ *      email: // value for 'email'
+ *      password: // value for 'password'
+ *      username: // value for 'username'
+ *      invitationCode: // value for 'invitationCode'
+ *   },
+ * });
+ */
+export function useRegisterByInvitationMutation(baseOptions?: Apollo.MutationHookOptions<RegisterByInvitationMutation, RegisterByInvitationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RegisterByInvitationMutation, RegisterByInvitationMutationVariables>(RegisterByInvitationDocument, options);
+      }
+export type RegisterByInvitationMutationHookResult = ReturnType<typeof useRegisterByInvitationMutation>;
+export type RegisterByInvitationMutationResult = Apollo.MutationResult<RegisterByInvitationMutation>;
+export type RegisterByInvitationMutationOptions = Apollo.BaseMutationOptions<RegisterByInvitationMutation, RegisterByInvitationMutationVariables>;
 export const UserDocument = gql`
     query User($id: String!) {
   user(id: $id) {

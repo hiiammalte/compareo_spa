@@ -1,16 +1,16 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { FormikHelpers, FormikProvider, useFormik } from "formik";
 import * as yup from 'yup'
 
-import { CreateProjectMutationVariables, Project } from "../../../graphql/hooks/graphql";
+import { CreateProjectMutationVariables, ProjectDataFragment, ProjectsDocument, ProjectsQuery, useCategoriesQuery } from "../../../graphql/hooks/graphql";
 import { useCreateProjectMutation } from '../../../graphql/hooks/graphql'
 import InputField from "../../form/InputField";
 import ErrorSummary from "../../form/ErrorSummary";
-import SelectField, { optionsType } from "../../form/SelectField";
+import SelectField, { optionType } from "../../form/SelectField";
 
 type FormProps = {
     formId: string,
-    onCreatedProject: (id: String) => void
+    onCreatedProject: (project: ProjectDataFragment) => void
 }
 
 const initialValues: CreateProjectMutationVariables = {
@@ -26,8 +26,10 @@ const validationSchema = yup.object({
 })
 
 function ProjectCreateForm({ onCreatedProject, formId } : FormProps) {
-    const [invalidApiResponse, setInvalid] = useState<boolean>(false);
+    const [invalidApiResponse, setInvalid] = useState<string>("");
     const [createProject] = useCreateProjectMutation();
+
+    const { data, loading, error } = useCategoriesQuery();
 
     const formik = useFormik<CreateProjectMutationVariables>({
         initialValues,
@@ -36,37 +38,59 @@ function ProjectCreateForm({ onCreatedProject, formId } : FormProps) {
                 values: CreateProjectMutationVariables,
                 { setSubmitting }: FormikHelpers<CreateProjectMutationVariables>
             ) => {
-            const response = await createProject({
-                variables: values
-            });
-            if (response && response.data?.createProject?.project) {
-                onCreatedProject(response.data.createProject.project.id);
-                setSubmitting(false);
-                setInvalid(false);
+                const response = await createProject({
+                    variables: values,
+                    update: (cache, { data }) => {
+                        try {
+                            const newProjectFromResponse = data?.createProject?.project;
+                            const existingProjects = cache.readQuery<ProjectsQuery>({
+                                query: ProjectsDocument
+                            });
+                            if (existingProjects && newProjectFromResponse) {
+                                cache.writeQuery<ProjectsQuery>({
+                                    query: ProjectsDocument,
+                                    data: {
+                                        projects: [...existingProjects.projects, newProjectFromResponse]
+                                    }
+                                })
+                            }
+                        } catch (e) {
+                            console.log("Error while updating cache", e);
+                        }
+                    }
+                });
+                if (response && response.data?.createProject?.project) {
+                    onCreatedProject(response.data.createProject.project);
+                    setSubmitting(false);
+                    setInvalid("");
+                    formik.resetForm();
+                }
+                if (response && response.data?.createProject?.errors) {
+                    console.log("PRODUCT CREATION ERRORS: ", response.data?.createProject?.errors)
+                    setInvalid(response.data.createProject.errors.map(x => x.message).join(" "));
+                }
             }
-            if (response && response.data?.createProject?.errors) {
-                console.log("LOGIN ERRORS: ", response.data?.createProject?.errors)
-                setInvalid(true);
-            }
-          }
-    });
-
-    const selectOptions: optionsType = [
-        { label: "Versicherung", value: "1" },
-        { label: "Autos", value: "2" },
-        { label: "Software", value: "3" },
-    ];
+        }
+    );
+    
+    const selectOptions: optionType[] | undefined = data?.categories && 
+        data?.categories.map(({title, id}) => ({ key: title, value: id}));
 
     return (
         <FormikProvider value={formik}>
             <form id={formId} onSubmit={formik.handleSubmit} >
                 <div className="form-group">
-                    <h6>Worum geht es?</h6>
+                    <h6>What is it about?</h6>
                     <InputField name="title" type="text" label="Name des Projektes" />
                     <InputField name="desciption" type="text" label="Beschreibung" />
-                    <SelectField name="categoryId" options={ selectOptions } label="Kategorie" />
-                    { invalidApiResponse && <ErrorSummary errorMessage="Invalid Input" /> }
                 </div>
+                {!loading && !error &&
+                    <div className="form-group">
+                        <h6>What are we comparing?</h6>
+                        <SelectField name="categoryId" options={ selectOptions } label="Kategorie" />
+                    </div>
+                }
+                { invalidApiResponse && <ErrorSummary errorMessage={ invalidApiResponse } /> }
             </form>
         </FormikProvider>
     );

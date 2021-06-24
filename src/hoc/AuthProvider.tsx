@@ -31,20 +31,19 @@ function AuthProvider({ children }: { children: ReactNode } ) : ReactElement {
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
-        fetch(`${process.env.REACT_APP_REFRESH_ACCESS_URL}`, { credentials: 'include' })
-            .then(res => res.json())
-            .then(({token, ok, errors} : ({token: string, ok: boolean, errors: string[]})) => {
-                if (ok) {
-                    setToken(token);
-                } else {
-                    console.log("REFRESHING ACCESS TOKEN ERRORS: ", errors);
-                }
-            })
-            .then(() => setLoading(false))
-            .catch(err => {
-                console.log("REFRESHING ACCESS TOKEN ERRORS: ", err);
-            })
-    }, [setToken]);
+        setLoading(true);
+        async function getAccessToken() {
+            const refreshedAccessToken = await refreshAccessToken();
+            if (refreshedAccessToken) {
+                setToken(refreshedAccessToken);
+            } else {
+                clearToken();
+            }
+            setLoading(false);
+        }
+
+        getAccessToken();
+    }, []);
     
     function getJwtPayload(): IAccessTokenPayload | null {
         let tokenPayload: IAccessTokenPayload | null = null;
@@ -61,7 +60,7 @@ function AuthProvider({ children }: { children: ReactNode } ) : ReactElement {
         return tokenPayload;   
     }
 
-    if (loading) return <p>...loading</p>
+    if (loading) return (<p>...loading</p>);
 
     return (
         <CurrentUserContext.Provider value={{
@@ -78,4 +77,15 @@ function useAuth() : ICurrentUserContext {
     return useContext(CurrentUserContext)
 }
 
-export { AuthProvider as default, useAuth };
+async function refreshAccessToken(): Promise<string | null> {
+    const response = await fetch(`${process.env.REACT_APP_REFRESH_ACCESS_URL}`, { credentials: 'include' });
+    const {token, ok, errors} : ({token: string, ok: boolean, errors: string[]}) = await response.json();
+    if (ok) {
+        return token;
+    } else {
+        console.log("REFRESHING ACCESS TOKEN ERRORS: ", errors);
+        return null;
+    }
+}
+
+export { AuthProvider as default, useAuth, refreshAccessToken };

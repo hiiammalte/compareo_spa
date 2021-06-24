@@ -1,0 +1,10 @@
+mutation RegisterByInvitation ($email: String!, $password: String!, $username: String!, $invitationCode: String! ) {
+    registerByInvitation(
+        options: { email: $email, password: $password, username: $username, invitationCode: $invitationCode }
+    ) {
+        token
+        errors {
+            message
+        }
+    }
+}

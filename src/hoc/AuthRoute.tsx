@@ -1,10 +1,12 @@
 import React, { ReactElement } from "react";
-import { Redirect, Route, RouteChildrenProps, RouteComponentProps } from "react-router-dom"
+import { Redirect, Route, RouteComponentProps } from "react-router-dom"
 import { PublicRoutes } from "../global/routeDefs";
 import { useAuth } from "./AuthProvider";
 
+export type RouteParameterProps = RouteComponentProps<{ id?: string | undefined }>;
+
 interface AuthRouteProps {
-    Component: React.FC<RouteChildrenProps>;
+    Component: React.ComponentType<RouteParameterProps>;
     path: string;
     exact?: boolean;
 }
@@ -13,18 +15,18 @@ export interface RedirectRouteState {
     referrer: string
 }
 
-function AuthRoute({ Component, path, exact = false } : AuthRouteProps): ReactElement {
+function AuthRoute({ Component, path, exact = false, ...rest } : AuthRouteProps): ReactElement {
     const { currentUser } = useAuth();
-
     return (
         <Route
+            {...rest}
             exact={exact}
             path={path}
-            render={(props: RouteComponentProps) => 
-                currentUser?.userId ? (
-                    <Component { ...props } />
+            render={(routeProps: RouteParameterProps) => 
+                currentUser !== null ? (
+                    <Component { ...routeProps } />
                 ) : (
-                    <Redirect to={ PublicRoutes.login } />
+                    <Redirect to={{pathname: PublicRoutes.login, state: { from: routeProps.location }}  } />
                 )
             }   
         />

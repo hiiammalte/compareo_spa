@@ -1,6 +1,7 @@
 #import "./category.fragment.graphql"
 #import "./product.fragment.graphql"
 #import "./user.fragment.graphql"
+#import "./attribute.fragment.graphql"
 
 fragment projectData on Project {
     id
@@ -11,6 +12,12 @@ fragment projectData on Project {
     }
     products {
         ...productData
+    }
+    attributes {
+        ...attributeData
+    }
+    collaborators {
+        ...userData
     }
     creator {
         ...userData
