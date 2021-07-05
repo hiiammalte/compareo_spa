@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { useApolloClient } from '@apollo/client'
 import { useHistory, NavLink } from 'react-router-dom'
 import { FormikHelpers, FormikProvider, useFormik } from 'formik'
 import * as yup from 'yup'
 
-import { useAuth } from '../hoc/AuthProvider'
+import { CurrentUserContext } from '../hoc/AuthProvider'
 import { AuthRoutes } from '../global/routeDefs'
 import SidemenuContainer from '../components/public/Sidemenu'
 import { LoginMutationVariables, useLoginMutation } from '../graphql/hooks/graphql'
@@ -28,7 +28,7 @@ const validationSchema = yup.object({
 function Login() {
     const apolloClient = useApolloClient();
     const [login] = useLoginMutation();
-    const { signIn } = useAuth();
+    const { signIn } = useContext(CurrentUserContext);
 
     const [invalidApiResponse, setInvalidApiResponse] = useState<boolean>(false);
     const history = useHistory();
@@ -44,11 +44,10 @@ function Login() {
                     variables: values
                 });
                 if (response && response.data?.login?.token) {
-                    await apolloClient.resetStore();
-                    signIn(response.data.login.token);
+                    await apolloClient.clearStore();
                     setSubmitting(false);
                     setInvalidApiResponse(false);
-                    console.log("LOGGED IN", response.data.login.token)
+                    signIn(response.data.login.token);
                     history.push(AuthRoutes.projects);
                 }
                 if (response && response.data?.login?.errors) {

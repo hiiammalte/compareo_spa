@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode, ReactElement } from 'react';
+import { createContext, useEffect, useState, ReactNode, ReactElement } from 'react';
 import jwt_decode from "jwt-decode";
 import jwtManager from '../services/jwtManager';
 
@@ -46,18 +46,21 @@ function AuthProvider({ children }: { children: ReactNode } ) : ReactElement {
     }, []);
     
     function getJwtPayload(): IAccessTokenPayload | null {
-        let tokenPayload: IAccessTokenPayload | null = null;
         const token = getToken();
         if (token) {
             try {
-                const { payload } = jwt_decode<IAccessToken>(token);
-                tokenPayload = payload;
+                const { payload, exp } = jwt_decode<IAccessToken>(token);
+                if (exp * 1000 > Date.now()) {
+                    return payload;
+                } else {
+                    clearToken();
+                    return null;
+                }
             } catch(err) {
                 console.log("Cannot decode Access Token. Error:" , err)
             }
-            
         }
-        return tokenPayload;   
+        return null;   
     }
 
     if (loading) return (<p>...loading</p>);
@@ -73,10 +76,6 @@ function AuthProvider({ children }: { children: ReactNode } ) : ReactElement {
     );
 };
 
-function useAuth() : ICurrentUserContext {
-    return useContext(CurrentUserContext)
-}
-
 async function refreshAccessToken(): Promise<string | null> {
     const response = await fetch(`${process.env.REACT_APP_REFRESH_ACCESS_URL}`, { credentials: 'include' });
     const {token, ok, errors} : ({token: string, ok: boolean, errors: string[]}) = await response.json();
@@ -88,4 +87,4 @@ async function refreshAccessToken(): Promise<string | null> {
     }
 }
 
-export { AuthProvider as default, useAuth, refreshAccessToken };
+export { AuthProvider as default, CurrentUserContext, refreshAccessToken };

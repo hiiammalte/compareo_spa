@@ -1,4 +1,4 @@
-import React from "react";
+import { ReactElement } from "react";
 import { Redirect } from "react-router";
 
 import AuthRoute from "../hoc/AuthRoute";
@@ -7,7 +7,7 @@ import Projects from "../pages/Projects";
 import PrivateLayout from "../components/private/PrivateLayout";
 import Project from "../pages/Project";
 
-const PrivateContainer: React.FC = () => {
+function PrivateContainer(): ReactElement {
     return (
         <PrivateLayout>
             <AuthRoute path={AuthRoutes.projects} exact Component={Projects}></AuthRoute>

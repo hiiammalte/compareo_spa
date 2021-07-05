@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { useApolloClient } from '@apollo/client'
 import { useHistory, NavLink } from 'react-router-dom'
 import { FormikHelpers, FormikProvider, useFormik } from 'formik'
 import * as yup from 'yup'
 
-import { useAuth } from '../hoc/AuthProvider'
+import { CurrentUserContext } from '../hoc/AuthProvider'
 import { AuthRoutes } from '../global/routeDefs'
 import SidemenuContainer from '../components/public/Sidemenu'
 import { RegisterByInvitationMutationVariables, useRegisterByInvitationMutation } from '../graphql/hooks/graphql'
@@ -29,7 +29,7 @@ const validationSchema = yup.object({
 function Register() {
     const apolloClient = useApolloClient();
     const [register] = useRegisterByInvitationMutation();
-    const { signIn } = useAuth();
+    const { signIn } = useContext(CurrentUserContext);
 
     const [invalidApiResponse, setInvalidApiResponse] = useState<boolean>(false);
     const history = useHistory();

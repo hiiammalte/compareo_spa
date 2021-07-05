@@ -1,7 +1,7 @@
 import React, { ReactElement } from "react";
 import { Redirect, Route, RouteComponentProps } from "react-router-dom"
 import { PublicRoutes } from "../global/routeDefs";
-import { useAuth } from "./AuthProvider";
+import jwtManager from "../services/jwtManager";
 
 export type RouteParameterProps = RouteComponentProps<{ id?: string | undefined }>;
 
@@ -16,19 +16,19 @@ export interface RedirectRouteState {
 }
 
 function AuthRoute({ Component, path, exact = false, ...rest } : AuthRouteProps): ReactElement {
-    const { currentUser } = useAuth();
     return (
         <Route
             {...rest}
             exact={exact}
             path={path}
-            render={(routeProps: RouteParameterProps) => 
-                currentUser !== null ? (
+            render={(routeProps: RouteParameterProps) => {
+                const { getToken } = jwtManager();
+                return getToken() !== null ? (
                     <Component { ...routeProps } />
                 ) : (
                     <Redirect to={{pathname: PublicRoutes.login, state: { from: routeProps.location }}  } />
                 )
-            }   
+            }}   
         />
     );
 }
